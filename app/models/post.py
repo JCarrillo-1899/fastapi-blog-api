@@ -1,4 +1,4 @@
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
 
 from datetime import datetime, timezone
 
@@ -12,4 +12,7 @@ class Post(SQLModel, table=True):
 
     # Relación con user
     author_id: int = Field(foreign_key="user.id")
-    
+    user = Relationship("User", back_populates="posts")
+
+    # Relación con comment
+    comments = Relationship("Comment", back_populates="post")

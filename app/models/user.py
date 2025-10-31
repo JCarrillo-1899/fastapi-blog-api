@@ -1,4 +1,4 @@
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
 
 from datetime import datetime, timezone
 
@@ -9,3 +9,7 @@ class User(SQLModel, table=True):
     hashed_password: str
     is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+
+    # Relaciones
+    posts = Relationship("Post", back_populates="user")
+    comments = Relationship("Comment", back_populates="user")
