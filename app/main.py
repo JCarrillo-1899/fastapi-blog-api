@@ -8,8 +8,7 @@ from models.comment import Comment
 # Creando las tablas
 database_url = "postgresql://postgres:postgres@localhost:5432/Blog"
 engine = create_engine(database_url, echo=True)
-def create_tables():
-    SQLModel.metadata.create_all(engine)
+SQLModel.metadata.create_all(engine)
 
 app = FastAPI()
 
