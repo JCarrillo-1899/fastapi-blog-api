@@ -4,7 +4,7 @@ app = FastAPI()
 
 @app.get("/")
 def root():
-    print("Mi API de Blogs está funcionando!")
+    return "Mi API de Blogs está funcionando!"
 
 """Endopints Obligatorios"""
 # AUTENTICACIÓN
