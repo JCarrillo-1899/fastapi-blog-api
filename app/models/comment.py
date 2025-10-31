@@ -8,5 +8,5 @@ class Comment(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
 
     # Relaciones
-    user = Relationship("User", back_populates="comments")
-    post = Relationship("Post", back_populates="comments")
+    user: "User" = Relationship(back_populates="comments")
+    post: "Post" = Relationship(back_populates="comments")

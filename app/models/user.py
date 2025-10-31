@@ -1,3 +1,4 @@
+from typing import List
 from sqlmodel import SQLModel, Field, Relationship
 
 from datetime import datetime, timezone
@@ -11,5 +12,5 @@ class User(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
 
     # Relaciones
-    posts = Relationship("Post", back_populates="user")
-    comments = Relationship("Comment", back_populates="user")
+    posts: List["Post"] = Relationship(back_populates="user")
+    comments: List["Comment"] = Relationship(back_populates="user")

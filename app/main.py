@@ -1,16 +1,25 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from sqlmodel import SQLModel, create_engine
 
-from models.user import User
-from models.post import Post
-from models.comment import Comment
+from app.models.user import User
+from app.models.post import Post
+from app.models.comment import Comment
 
-# Creando las tablas
+# Configuración de base de datos
 database_url = "postgresql://postgres:postgres@localhost:5432/Blog"
 engine = create_engine(database_url, echo=True)
-SQLModel.metadata.create_all(engine)
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: se ejecuta al iniciar la app
+    print("Creando tablas...")
+    SQLModel.metadata.create_all(engine)
+    yield
+    # Shutdown: se ejecuta al cerrar la app
+    print("Cerrando conexiones...")
+
+app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 def root():

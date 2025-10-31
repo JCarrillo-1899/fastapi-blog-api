@@ -1,3 +1,4 @@
+from typing import List
 from sqlmodel import SQLModel, Field, Relationship
 
 from datetime import datetime, timezone
@@ -12,7 +13,7 @@ class Post(SQLModel, table=True):
 
     # Relación con user
     author_id: int = Field(foreign_key="user.id")
-    user = Relationship("User", back_populates="posts")
+    user: "User" = Relationship(back_populates="posts")
 
     # Relación con comment
-    comments = Relationship("Comment", back_populates="post")
+    comments: List["Comment"] = Relationship(back_populates="post")
