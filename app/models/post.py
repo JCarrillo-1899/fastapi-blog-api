@@ -8,12 +8,12 @@ class Post(SQLModel, table=True):
     title: str = Field(index=True)
     content: str
     published: bool = Field(default=True)
-    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Relación con user
-    author_id: int = Field(foreign_key="user.id")
-    user: "User" = Relationship(back_populates="posts")
+    #user_id: int = Field(foreign_key="user.id")
+    #user: "User" = Relationship(back_populates="posts")
 
     # Relación con comment
-    comments: List["Comment"] = Relationship(back_populates="post")
+    #comments: List["Comment"] = Relationship(back_populates="post")

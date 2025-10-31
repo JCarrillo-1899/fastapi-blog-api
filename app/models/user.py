@@ -9,8 +9,8 @@ class User(SQLModel, table=True):
     email: str = Field(unique=True, index=True)
     hashed_password: str
     is_active: bool = True
-    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Relaciones
-    posts: List["Post"] = Relationship(back_populates="user")
-    comments: List["Comment"] = Relationship(back_populates="user")
+    #posts: List["Post"] = Relationship(back_populates="user")
+    #comments: List["Comment"] = Relationship(back_populates="user")
