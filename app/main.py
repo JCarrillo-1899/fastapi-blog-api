@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException, status
 from sqlmodel import SQLModel, Session, create_engine, select
 from app.database import get_session, engine
 
@@ -49,5 +49,14 @@ async def create_post(post_data: PostCreate, session: Session = Depends(get_sess
 async def get_posts(session: Session= Depends(get_session)):
     statement = select(Post).where(Post.published==True)
     response = session.exec(statement).all()
+    return response
+
+@app.get("/posts/{id}", response_model=PostResponse)
+async def get_post_by_id(id: int, session: Session = Depends(get_session)):
+    try:
+        statement = select(Post).where(Post.published==True).where(Post.id==id)
+        response = session.exec(statement).one()
+    except:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No se encuentra un post con ese ID")
     return response
 # COMENTARIOS
