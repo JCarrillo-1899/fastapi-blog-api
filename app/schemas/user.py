@@ -9,3 +9,4 @@ class UserResponse(SQLModel):
     id: int
     username: str
     email: str
+    is_active: bool

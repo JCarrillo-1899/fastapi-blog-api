@@ -9,3 +9,4 @@ class PostResponse(SQLModel):
     title: str
     content: str
     published: bool
+    user: "UserResponse"
