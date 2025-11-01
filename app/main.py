@@ -45,7 +45,7 @@ async def create_post(post_data: PostCreate, session: Session = Depends(get_sess
     session.refresh(db_post)
     return db_post
 
-@app.get("/posts", response_model=list[Post])
+@app.get("/posts", response_model=list[PostResponse])
 async def get_posts(session: Session= Depends(get_session)):
     statement = select(Post).where(Post.published==True)
     response = session.exec(statement).all()
