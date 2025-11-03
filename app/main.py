@@ -56,7 +56,10 @@ async def register(user: UserCreate, session: Session = Depends(get_session)):
     if response:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ya existe un usuario con ese nombre")
 
-    db_user = User(**user.model_dump())
+    user_data = user.model_dump(exclude={"hashed_password"})
+    hashed_password = hash_password(user.hashed_password)
+
+    db_user = User(**user_data, hashed_password=hashed_password)
 
     session.add(db_user)
     session.commit()
