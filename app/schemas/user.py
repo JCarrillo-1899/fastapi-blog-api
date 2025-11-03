@@ -3,7 +3,7 @@ from sqlmodel import SQLModel
 class UserCreate(SQLModel):
     username: str
     email: str
-    password: str
+    hashed_password: str
 
 class UserResponse(SQLModel):
     id: int
