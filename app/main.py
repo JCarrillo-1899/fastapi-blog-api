@@ -34,7 +34,7 @@ app = FastAPI(lifespan=lifespan)
 
 crypt = CryptContext(schemes=["bcrypt"])
 
-async def hash_password(password: str):
+def hash_password(password: str):
     return crypt.hash(password)
 
 @app.get("/")
@@ -57,9 +57,9 @@ async def register(user: UserCreate, session: Session = Depends(get_session)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ya existe un usuario con ese nombre")
 
     user_data = user.model_dump(exclude={"hashed_password"})
-    hashed_password = hash_password(user.hashed_password)
+    hashed_pass = hash_password(user.hashed_password)
 
-    db_user = User(**user_data, hashed_password=hashed_password)
+    db_user = User(**user_data, hashed_password=hashed_pass)
 
     session.add(db_user)
     session.commit()
