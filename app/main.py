@@ -8,6 +8,7 @@ from app.models.post import Post
 from app.models.comment import Comment
 
 from app.schemas.post import PostResponse, PostCreate
+from app.schemas.user import UserResponse, UserCreate
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -32,6 +33,14 @@ def root():
 
 """Endopints Obligatorios"""
 # AUTENTICACIÓN
+@app.post("/register", response_model=UserResponse)
+async def register(user: UserCreate, session: Session = Depends(get_session)):
+    db_user = User(**user.model_dump())
+
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
+    return db_user
 
 # USUARIOS
 
