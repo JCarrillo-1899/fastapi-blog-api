@@ -35,6 +35,17 @@ def root():
 # AUTENTICACIÓN
 @app.post("/register", response_model=UserResponse)
 async def register(user: UserCreate, session: Session = Depends(get_session)):
+
+    statement = select(User).where(User.email==user.email)
+    response = session.exec(statement).all()
+    if response:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ya existe un usuario con ese email")
+
+    statement = select(User).where(User.username==user.username)
+    response = session.exec(statement).all()
+    if response:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ya existe un usuario con ese nombre")
+
     db_user = User(**user.model_dump())
 
     session.add(db_user)
