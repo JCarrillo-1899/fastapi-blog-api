@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlmodel import SQLModel, Session, create_engine, select
 from app.database import get_session, engine
+from passlib.context import CryptContext
 
 from app.models.user import User
 from app.models.post import Post
@@ -25,7 +26,16 @@ async def lifespan(app: FastAPI):
     # Shutdown: se ejecuta al cerrar la app
     print("Cerrando conexiones...")
 
+ALGORITHM = "HS256"
+ACCESS_TOKEN_DURATION = 1
+SECRET = "9c26dd6a346e87a22e36f8a35afeba413a8ef8a3292694d01772448a71542040"
+
 app = FastAPI(lifespan=lifespan)
+
+crypt = CryptContext(schemes=["bcrypt"])
+
+async def hash_password(password: str):
+    return crypt.hash(password)
 
 @app.get("/")
 def root():
