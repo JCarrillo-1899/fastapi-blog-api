@@ -130,6 +130,9 @@ async def login(form: Annotated[OAuth2PasswordRequestForm, Depends()], session: 
     return Token(access_token=access_token, token_type="bearer")
 
 # USUARIOS
+@app.get("/users/me", response_model=UserResponse)
+async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
+    return current_user
 
 # POSTS
 @app.post("/posts", response_model=PostResponse)
