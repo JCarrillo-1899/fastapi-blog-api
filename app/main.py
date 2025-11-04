@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
     print("Cerrando conexiones...")
 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_DURATION = 5
+ACCESS_TOKEN_DURATION = 10
 SECRET = "4b0cf6bf3a6fbc48ad681a508e4aae525eb376a640f0145f56975064fc26a4ae"
 
 app = FastAPI(lifespan=lifespan)
@@ -132,6 +132,22 @@ async def login(form: Annotated[OAuth2PasswordRequestForm, Depends()], session: 
 # USUARIOS
 @app.get("/users/me", response_model=UserResponse)
 async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
+    return current_user
+
+@app.put("/users/me", response_model=UserResponse)
+async def update_user(
+    current_user: Annotated[User, Depends(get_current_user)], 
+    session: Annotated[Session, Depends(get_session)],
+    email: str | None = None
+    ):
+
+    if email:
+        current_user.email = email
+    
+    session.add(current_user)
+    session.commit()
+    session.refresh(current_user)
+    
     return current_user
 
 # POSTS
