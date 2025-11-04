@@ -1,5 +1,7 @@
 from contextlib import asynccontextmanager
+from typing import Annotated
 from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlmodel import SQLModel, Session, create_engine, select
 from app.database import get_session, engine
 from passlib.context import CryptContext
@@ -10,6 +12,7 @@ from app.models.comment import Comment
 
 from app.schemas.post import PostResponse, PostCreate
 from app.schemas.user import UserResponse, UserCreate
+from app.schemas.token import Token
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -32,7 +35,21 @@ SECRET = "9c26dd6a346e87a22e36f8a35afeba413a8ef8a3292694d01772448a71542040"
 
 app = FastAPI(lifespan=lifespan)
 
+oauth2 = OAuth2PasswordBearer(tokenUrl="login")
+
 crypt = CryptContext(schemes=["bcrypt"])
+
+def search_user(username: str, session: Session):
+    statement = select(User).where(User.username==username)
+    
+    response = session.exec(statement).first()
+    if not response:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario o contraseña incorrecta")
+
+    return response
+
+def verify_password(password: str, hashed_apssword: str):
+    return crypt.verify(password, hashed_apssword)
 
 def hash_password(password: str):
     return crypt.hash(password)
@@ -65,6 +82,18 @@ async def register(user: UserCreate, session: Session = Depends(get_session)):
     session.commit()
     session.refresh(db_user)
     return db_user
+
+#@app.post("/login", response_model=Token)
+@app.post("/login")
+async def login(form: Annotated[OAuth2PasswordRequestForm, Depends()], session: Session = Depends(get_session)):
+    
+    user_db = search_user(form.username, session)
+    password = verify_password(form.password, user_db.hashed_password)
+    
+    if not (user_db and password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario o contraseña incorrecta")
+    
+    return {"todo": "ok"}
 
 # USUARIOS
 
