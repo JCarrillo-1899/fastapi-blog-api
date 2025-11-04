@@ -7,6 +7,7 @@ from sqlmodel import SQLModel, Session, create_engine, select
 from app.database import get_session, engine
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
+from jwt.exceptions import InvalidTokenError
 
 from app.models.user import User
 from app.models.post import Post
@@ -32,7 +33,7 @@ async def lifespan(app: FastAPI):
     print("Cerrando conexiones...")
 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_DURATION = 1
+ACCESS_TOKEN_DURATION = 5
 SECRET = "4b0cf6bf3a6fbc48ad681a508e4aae525eb376a640f0145f56975064fc26a4ae"
 
 app = FastAPI(lifespan=lifespan)
@@ -67,6 +68,25 @@ def create_access_token(data: dict):
 
     return encoded_jwt
 
+async def get_current_user(
+        token: Annotated[str, Depends(oauth2)], 
+        session: Annotated[Session, Depends(get_session)]):
+    
+    exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Credenciales de autenticación inválidas", 
+            headers={"WWW-Authenticate": "Bearer"}
+            )
+    
+    try:
+        username = jwt.decode(token, SECRET, algorithms=ALGORITHM).get("sub")
+        if username is None:
+            raise exception
+    except InvalidTokenError:
+        raise exception
+    
+    return search_user(username, session)
+
 @app.get("/")
 def root():
     return "Mi API de Blogs está funcionando!"
@@ -74,7 +94,7 @@ def root():
 """Endopints Obligatorios"""
 # AUTENTICACIÓN
 @app.post("/register", response_model=UserResponse)
-async def register(user: UserCreate, session: Session = Depends(get_session)):
+async def register(user: UserCreate, session: Annotated[Session, Depends(get_session)]):
 
     statement = select(User).where(User.email==user.email)
     response = session.exec(statement).all()
@@ -97,7 +117,7 @@ async def register(user: UserCreate, session: Session = Depends(get_session)):
     return db_user
 
 @app.post("/login", response_model=Token)
-async def login(form: Annotated[OAuth2PasswordRequestForm, Depends()], session: Session = Depends(get_session)):
+async def login(form: Annotated[OAuth2PasswordRequestForm, Depends()], session: Annotated[Session, Depends(get_session)]):
     
     user_db = search_user(form.username, session)
     password = verify_password(form.password, user_db.hashed_password)
@@ -113,8 +133,13 @@ async def login(form: Annotated[OAuth2PasswordRequestForm, Depends()], session: 
 
 # POSTS
 @app.post("/posts", response_model=PostResponse)
-async def create_post(post_data: PostCreate, session: Session = Depends(get_session)):
-    db_post = Post(**post_data.model_dump())
+async def create_post(
+    post_data: PostCreate, 
+    current_user: Annotated[User, Depends(get_current_user)], 
+    session: Annotated[Session, Depends(get_session)]
+    ):
+    
+    db_post = Post(**post_data.model_dump(), user_id=current_user.id)
 
     session.add(db_post)
     session.commit()
@@ -122,13 +147,13 @@ async def create_post(post_data: PostCreate, session: Session = Depends(get_sess
     return db_post
 
 @app.get("/posts", response_model=list[PostResponse])
-async def get_posts(session: Session= Depends(get_session)):
+async def get_posts(session: Annotated[Session, Depends(get_session)]):
     statement = select(Post).where(Post.published==True)
     response = session.exec(statement).all()
     return response
 
 @app.get("/posts/{id}", response_model=PostResponse)
-async def get_post_by_id(id: int, session: Session = Depends(get_session)):
+async def get_post_by_id(id: int, session: Annotated[Session, Depends(get_session)]):
     try:
         statement = select(Post).where(Post.published==True).where(Post.id==id)
         response = session.exec(statement).one()
