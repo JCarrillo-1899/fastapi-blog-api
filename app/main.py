@@ -1,3 +1,4 @@
+import jwt
 from contextlib import asynccontextmanager
 from typing import Annotated
 from fastapi import FastAPI, Depends, HTTPException, status
@@ -5,6 +6,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlmodel import SQLModel, Session, create_engine, select
 from app.database import get_session, engine
 from passlib.context import CryptContext
+from datetime import datetime, timedelta, timezone
 
 from app.models.user import User
 from app.models.post import Post
@@ -31,7 +33,7 @@ async def lifespan(app: FastAPI):
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_DURATION = 1
-SECRET = "9c26dd6a346e87a22e36f8a35afeba413a8ef8a3292694d01772448a71542040"
+SECRET = "4b0cf6bf3a6fbc48ad681a508e4aae525eb376a640f0145f56975064fc26a4ae"
 
 app = FastAPI(lifespan=lifespan)
 
@@ -53,6 +55,14 @@ def verify_password(password: str, hashed_apssword: str):
 
 def hash_password(password: str):
     return crypt.hash(password)
+
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_DURATION)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET, algorithm=ALGORITHM)
+
+    return encoded_jwt
 
 @app.get("/")
 def root():
@@ -83,8 +93,7 @@ async def register(user: UserCreate, session: Session = Depends(get_session)):
     session.refresh(db_user)
     return db_user
 
-#@app.post("/login", response_model=Token)
-@app.post("/login")
+@app.post("/login", response_model=Token)
 async def login(form: Annotated[OAuth2PasswordRequestForm, Depends()], session: Session = Depends(get_session)):
     
     user_db = search_user(form.username, session)
@@ -93,7 +102,9 @@ async def login(form: Annotated[OAuth2PasswordRequestForm, Depends()], session: 
     if not (user_db and password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario o contraseña incorrecta")
     
-    return {"todo": "ok"}
+    access_token = create_access_token(data={"sub": user_db.username, "user_id": user_db.id})
+    
+    return Token(access_token=access_token, token_type="bearer")
 
 # USUARIOS
 
