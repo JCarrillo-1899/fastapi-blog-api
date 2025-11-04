@@ -12,5 +12,5 @@ class User(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Relaciones
-    #posts: List["Post"] = Relationship(back_populates="user")
-    #comments: List["Comment"] = Relationship(back_populates="user")
+    posts: List["Post"] = Relationship(back_populates="user")
+    comments: List["Comment"] = Relationship(back_populates="user")
