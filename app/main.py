@@ -47,6 +47,9 @@ def search_user(username: str, session: Session):
     response = session.exec(statement).first()
     if not response:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario o contraseña incorrecta")
+    
+    if not response.is_active:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Usuario inactivo")
 
     return response
 
