@@ -10,3 +10,7 @@ class UserResponse(SQLModel):
     username: str
     email: str
     is_active: bool
+
+class UserUpdate(SQLModel):
+    email: str | None = None
+    is_active: bool | None = None
