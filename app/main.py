@@ -14,7 +14,7 @@ from app.models.post import Post
 from app.models.comment import Comment
 
 from app.schemas.post import PostResponse, PostCreate
-from app.schemas.user import UserResponse, UserCreate
+from app.schemas.user import UserResponse, UserCreate, UserUpdate
 from app.schemas.token import Token
 
 @asynccontextmanager
@@ -136,13 +136,16 @@ async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
 
 @app.put("/users/me", response_model=UserResponse)
 async def update_user(
+    form_data: UserUpdate,
     current_user: Annotated[User, Depends(get_current_user)], 
-    session: Annotated[Session, Depends(get_session)],
-    email: str | None = None
+    session: Annotated[Session, Depends(get_session)]
     ):
 
-    if email:
-        current_user.email = email
+    if form_data.email is not None:
+        current_user.email = form_data.email
+    
+    if form_data.is_active is not None:
+        current_user.is_active = form_data.is_active
     
     session.add(current_user)
     session.commit()
