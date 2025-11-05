@@ -153,6 +153,13 @@ async def update_user(
     
     return current_user
 
+@app.get("/users/{id}", response_model=UserResponse)
+async def get_user_by_id(id: int, session: Annotated[Session, Depends(get_session)]):
+    statement = select(User).where(User.id==id)
+    response = session.exec(statement).first()
+
+    return response
+
 # POSTS
 @app.post("/posts", response_model=PostResponse)
 async def create_post(
