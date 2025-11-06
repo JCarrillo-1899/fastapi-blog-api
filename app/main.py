@@ -60,6 +60,12 @@ def verify_user_by_id(id: int, session: Session):
 
     return response
 
+def verify_post_by_id(id: int, session: Session):
+    statement = select(Post).where(Post.published==True).where(Post.id==id)
+    response = session.exec(statement).first()
+
+    return response
+
 def verify_password(password: str, hashed_apssword: str):
     return crypt.verify(password, hashed_apssword)
 
@@ -203,11 +209,12 @@ async def get_posts(session: Annotated[Session, Depends(get_session)]):
 
 @app.get("/posts/{id}", response_model=PostResponse)
 async def get_post_by_id(id: int, session: Annotated[Session, Depends(get_session)]):
-    try:
-        statement = select(Post).where(Post.published==True).where(Post.id==id)
-        response = session.exec(statement).one()
-    except:
+    
+    response = verify_post_by_id(id, session)
+
+    if not response:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No se encuentra un post con ese ID")
+
     return response
 
 @app.put("/posts/{id}", response_model=PostResponse)
@@ -217,8 +224,7 @@ async def update_post(
     current_user: Annotated[User, Depends(get_current_user)], 
     session: Annotated[Session, Depends(get_session)]
     ):
-    statement = select(Post).where(Post.id==id)
-    response = session.exec(statement).first()
+    response = verify_post_by_id(id, session)
 
     if not response:
         raise HTTPException(status_code=404, detail="Post no encontrado")
@@ -235,5 +241,23 @@ async def update_post(
     session.refresh(response)
 
     return response
+
+@app.delete("/posts/{id}")
+async def delete_post_by_id(
+    id: int, 
+    current_user: Annotated[User, Depends(get_current_user)], 
+    session: Annotated[Session, Depends(get_session)]
+    ):
+    response = verify_post_by_id(id, session)
+    if not response:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post no encontrado")
+    
+    if response.user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado para editar este post")
+    
+    session.delete(response)
+    session.commit()
+
+    return{"message": "Post eliminado correctamente"}
 
 # COMENTARIOS
