@@ -171,12 +171,13 @@ async def get_user_by_id(id: int, session: Annotated[Session, Depends(get_sessio
 
 @app.get("/users/{id}/posts", response_model=list[PostResponse])
 async def get_user_posts(id: int, session: Annotated[Session, Depends(get_session)]):
-    statement = select(Post).where(Post.user_id==id)
-    response = session.exec(statement).all()
-
+    
     if not verify_user_by_id(id, session):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe un usuario con ese ID")
     
+    statement = select(Post).where(Post.user_id==id)
+    response = session.exec(statement).all()
+
     return response
 
 # POSTS
