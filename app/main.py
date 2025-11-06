@@ -209,4 +209,31 @@ async def get_post_by_id(id: int, session: Annotated[Session, Depends(get_sessio
     except:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No se encuentra un post con ese ID")
     return response
+
+@app.put("/posts/{id}", response_model=PostResponse)
+async def update_post(
+    id: int, 
+    post_data: PostCreate,
+    current_user: Annotated[User, Depends(get_current_user)], 
+    session: Annotated[Session, Depends(get_session)]
+    ):
+    statement = select(Post).where(Post.id==id)
+    response = session.exec(statement).first()
+
+    if not response:
+        raise HTTPException(status_code=404, detail="Post no encontrado")
+    
+    if response.user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado para editar este post")
+    
+
+    response.title = post_data.title
+    response.content = post_data.content
+
+    session.add(response)
+    session.commit()
+    session.refresh(response)
+
+    return response
+
 # COMENTARIOS
