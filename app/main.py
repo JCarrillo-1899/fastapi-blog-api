@@ -307,6 +307,9 @@ async def delete_comment(
     session: Annotated[Session, Depends(get_session)]
     ):
     comment = verify_comment_by_id(id, session)
+
+    if not comment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe un comentario con ese ID")
     
     # Verificar que el usuario es el autor del comentario
     if comment.user_id != current_user.id:
