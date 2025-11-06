@@ -288,3 +288,14 @@ async def create_comment(
     session.refresh(db_comment)
 
     return db_comment
+
+@app.get("/posts/{id}/comments", response_model=list[CommentResponse])
+async def get_post_comments(id: int, session: Session = Depends(get_session)):
+    # Verificar que el post existe
+    if not verify_post_by_id(id, session):
+        raise HTTPException(status_code=404, detail="Post no encontrado")
+    
+    # Obtener comentarios
+    statement = select(Comment).where(Comment.post_id == id)
+    comments = session.exec(statement).all()
+    return comments
