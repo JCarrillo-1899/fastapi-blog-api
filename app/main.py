@@ -13,6 +13,7 @@ from app.models.user import User
 from app.models.post import Post
 from app.models.comment import Comment
 
+from app.schemas.comment import CommentCreate, CommentResponse
 from app.schemas.post import PostResponse, PostCreate
 from app.schemas.user import UserResponse, UserCreate, UserUpdate
 from app.schemas.token import Token
@@ -62,6 +63,12 @@ def verify_user_by_id(id: int, session: Session):
 
 def verify_post_by_id(id: int, session: Session):
     statement = select(Post).where(Post.published==True).where(Post.id==id)
+    response = session.exec(statement).first()
+
+    return response
+
+def verify_comment_by_id(id: int, session: Session):
+    statement = select(Comment).where(Comment.id==id)
     response = session.exec(statement).first()
 
     return response
@@ -258,6 +265,26 @@ async def delete_post_by_id(
     session.delete(response)
     session.commit()
 
-    return{"message": "Post eliminado correctamente"}
+    return {"message": "Post eliminado correctamente"}
 
 # COMENTARIOS
+
+@app.post("/posts/{id}/comments", response_model=CommentResponse)
+async def create_comment(
+    id: int, 
+    comment: CommentCreate, 
+    current_user: Annotated[User, Depends(get_current_user)], 
+    session: Annotated[Session, Depends(get_session)]
+    ):
+    post = verify_post_by_id(id, session)
+
+    if not post:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post no encontrado")
+    
+    db_comment = Comment(**comment.model_dump(), user_id=current_user.id, post_id=id)
+
+    session.add(db_comment)
+    session.commit()
+    session.refresh(db_comment)
+
+    return db_comment

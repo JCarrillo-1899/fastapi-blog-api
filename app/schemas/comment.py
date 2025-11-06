@@ -1,8 +1,8 @@
 from sqlmodel import SQLModel
 
-class PostCreate(SQLModel):
+class CommentCreate(SQLModel):
     content: str
 
-class PostResponse(SQLModel):
+class CommentResponse(SQLModel):
     id: int
     content: str
