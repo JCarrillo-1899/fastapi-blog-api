@@ -158,6 +158,21 @@ async def get_user_by_id(id: int, session: Annotated[Session, Depends(get_sessio
     statement = select(User).where(User.id==id)
     response = session.exec(statement).first()
 
+    if not response:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe un usuario con ese ID")
+
+    return response
+
+@app.get("/users/{id}/posts", response_model=list[PostResponse])
+async def get_user_posts(id: int, session: Annotated[Session, Depends(get_session)]):
+    statement = select(Post).where(Post.user_id==id)
+    response = session.exec(statement).all()
+
+    print(response)
+
+    if not response:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe un usuario con ese ID")
+    
     return response
 
 # POSTS
