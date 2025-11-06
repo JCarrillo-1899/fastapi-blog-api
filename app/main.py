@@ -290,7 +290,7 @@ async def create_comment(
     return db_comment
 
 @app.get("/posts/{id}/comments", response_model=list[CommentResponse])
-async def get_post_comments(id: int, session: Session = Depends(get_session)):
+async def get_post_comments(id: int, session: Annotated[Session, Depends(get_session)]):
     # Verificar que el post existe
     if not verify_post_by_id(id, session):
         raise HTTPException(status_code=404, detail="Post no encontrado")
@@ -299,3 +299,19 @@ async def get_post_comments(id: int, session: Session = Depends(get_session)):
     statement = select(Comment).where(Comment.post_id == id)
     comments = session.exec(statement).all()
     return comments
+
+@app.delete("/comments/{id}")
+async def delete_comment(
+    id: int, 
+    current_user: Annotated[User, Depends(get_current_user)], 
+    session: Annotated[Session, Depends(get_session)]
+    ):
+    comment = verify_comment_by_id(id, session)
+    
+    # Verificar que el usuario es el autor del comentario
+    if comment.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="No autorizado")
+    
+    session.delete(comment)
+    session.commit()
+    return {"message": "Comentario eliminado"}
