@@ -54,6 +54,12 @@ def search_user(username: str, session: Session):
 
     return response
 
+def verify_user_by_id(id: int, session: Session):
+    statement = select(User).where(User.id==id)
+    response = session.exec(statement).first()
+
+    return response
+
 def verify_password(password: str, hashed_apssword: str):
     return crypt.verify(password, hashed_apssword)
 
@@ -155,8 +161,8 @@ async def update_user(
 
 @app.get("/users/{id}", response_model=UserResponse)
 async def get_user_by_id(id: int, session: Annotated[Session, Depends(get_session)]):
-    statement = select(User).where(User.id==id)
-    response = session.exec(statement).first()
+    
+    response = verify_user_by_id(id, session)
 
     if not response:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe un usuario con ese ID")
@@ -168,7 +174,7 @@ async def get_user_posts(id: int, session: Annotated[Session, Depends(get_sessio
     statement = select(Post).where(Post.user_id==id)
     response = session.exec(statement).all()
 
-    if not response:
+    if not verify_user_by_id(id, session):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe un usuario con ese ID")
     
     return response
