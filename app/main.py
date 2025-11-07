@@ -20,9 +20,6 @@ from app.schemas.token import Token
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # ✅ ELIMINA tablas existentes
-    print("Eliminando tablas antiguas...")
-    SQLModel.metadata.drop_all(engine)
     
     # ✅ CREA tablas nuevas con la estructura actual
     print("Creando tablas nuevas...")
@@ -42,7 +39,7 @@ app = FastAPI(lifespan=lifespan)
 
 oauth2 = OAuth2PasswordBearer(tokenUrl="login")
 
-crypt = CryptContext(schemes=["bcrypt"])
+crypt = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # --- FUNCIONES DE UTILIDAD ---
 def search_user(username: str, session: Session):
